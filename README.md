@@ -1,24 +1,6 @@
 # ScientificMethodology
-# Lesson 1
-## Introduction
-**Github with slides and homeworks:** 
-github.com/alegrand/SMPE
-Collaborative notes **and homework reporting** on the Pad:
-http://pads.univ-grenoble-alpes.fr/p/MOSIG-SMPE-2022-2023
-**Communication**:
-Mattermost
 
-To-do:
-1. Set up a webpage on Github for SMPE, following the model on the Pad
-2. Add your name to the Pad in the students section
-
-### Course organization
-- 12 lectures
-- (Many) practical homeworks (50%)
-- A final exam (50%)
-
-
-**Homework on Github**
+**Homework (Lesson 1)**
 [ x ] Read Popper’s text   
 [ x ] Indicate your name on the Pad. You will use to collaborate and fill in all the information you can.  
 [ x ] Register on the Mattermost through this invitation link. This is the preferred communication mode.  
