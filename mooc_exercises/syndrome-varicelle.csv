@@ -1,4 +1,4 @@
-# @source="réseau Sentinelles, INSERM, Sorbonne Université, http://www.sentiweb.fr", @meta={"period":[199049,202240],"geo":["PAY","1"],"geo_ref":"insee","indicator":"7","type":"all","conf_int":true,"compact":false}, @date=2022-10-18T13:36:23+02:00
+# @source="rï¿½seau Sentinelles, INSERM, Sorbonne Universitï¿½, http://www.sentiweb.fr", @meta={"period":[199049,202240],"geo":["PAY","1"],"geo_ref":"insee","indicator":"7","type":"all","conf_int":true,"compact":false}, @date=2022-10-18T13:36:23+02:00
 week,indicator,inc,inc_low,inc_up,inc100,inc100_low,inc100_up,geo_insee,geo_name
 202240,7,4912,1495,8329,7,2,12,FR,France
 202239,7,2041,331,3751,3,0,6,FR,France
