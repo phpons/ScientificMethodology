@@ -1,0 +1,76 @@
+---
+title: "Challenger disaster - reanalysis"
+author: "Pedro Pons"
+date: "2022-10-28"
+output: html_document
+---
+## Load libraries
+
+```{r}
+library(tidyverse)
+```
+
+
+## Load data
+
+```{r}
+data <- read.csv("shuttle.csv")
+```
+
+Unlike the problematic analysis, we will not filter out the rows with 0 malfunctions; that'd mean missing out on valuable information, e.g., a commonly occurring temperature X that has no malfunctions in 99% of the cases will only have its "faulty" instances represented in the dataset if we filter those rows out.
+
+**However, for the purposes of showcasing the negative effects of filtering, I will also show the logistic regression for the filtered dataset in the end of this document**
+
+## Visualization of the data
+```{r }
+ggplot(data = data, aes(x = Temperature, y = Malfunction/Count)) + geom_point() + coord_cartesian(ylim=c(0,1))
+```
+
+
+## Logistic regression
+```{r }
+my_log_model <- glm(data = data, Malfunction/Count ~ Temperature, weights = Count, family = "binomial")
+```
+
+
+Create predictions for temperatures (F) from 0 - 100 using the model:
+```{r}
+temperatures = seq(from=0, to=100, by = 1.0)
+probabilities <- predict(my_log_model, list(Temperature = temperatures), type="response")
+```
+
+Plot the predictions:
+```{r}
+plot(temperatures, probabilities, type="l", ylim=c(0,1))
+points(data = data, Malfunction/Count ~ Temperature)
+```
+
+## Conclusion
+As we can see, a logistic regression model making smarter assumptions about the data could have predicted a high probability of O-Ring failure for the temperatures recorded at the flight (31 F). This analysis could be further improved with the addition of the estimation of confidence intervals.
+
+```{r}
+predict(my_log_model, list(Temperature = 31), type="response")
+```
+
+
+## (Problematic) logistic regression - Ignore if you have not read above
+Let's do the same logistic regression, but filtering out the non-malfunctions
+```{r}
+malfunctions <- data[data$Malfunction > 0,]
+```
+
+```{r }
+my_faulty_model <- glm(data = malfunctions, Malfunction/Count ~ Temperature, weights = Count, family = "binomial")
+```
+
+```{r}
+probabilities <- predict(my_faulty_model, list(Temperature = temperatures), type="response")
+plot(temperatures, probabilities, type="l", ylim=c(0,1))
+points(data = malfunctions, Malfunction/Count ~ Temperature)
+```
+
+By butchering the dataset with the malfunctions filter, we obtain a logistic regression model that has little predicting power as seen in the plot above and in the prediction below:
+
+```{r}
+predict(my_faulty_model, list(Temperature = 31), type="response")
+```
