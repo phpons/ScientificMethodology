@@ -1,0 +1,80 @@
+---
+title: "Investigation the effectiveness of alternative pedagogy techniques in a group of students"
+author: "Pedro Pons"
+date: "2022-10-27"
+output: html_document
+---
+## Loading libraries
+```{r}	
+library(ggplot2)
+```
+
+
+## Data acquiral
+
+The data for this computational document was acquired via the tedious process copying the data from a .pdf document provided in the SMPE repository into a .csv file.
+
+## Data loading
+```{r}	
+data_file = "score_section_group.csv"	
+data <- read.csv(data_file)
+
+group1 <- data[data$group == 1,]
+group2 <- data[data$group == 2,]
+group1$group <- NULL
+group2$group <- NULL
+```
+
+## Data analysis
+
+Let's get a first look at the data
+```{r}
+summary(group1)
+summary(group2)
+```
+
+This is interesting, taking all sections into account:
+- Group 1 has a higher mean score 
+- Group 2 has a higher median score
+
+```{r}
+group1_mean <- aggregate(group1$score , list(group1$section), median)
+colnames(group1_median) <- c("section", "mean_score")
+
+group2_mean <- aggregate(group2$score , list(group2$section), median)
+colnames(group2_median) <- c("section", "mean_score")
+```
+
+
+### Plotting
+Let's see how each group's median score progressed over each section. The median score was chosen to mitigate the impact of outliers in each group. Group 1 will be plotted in **blue**, while group 2 will be plotted in **red**. 
+
+```{r}
+# plot(data) - avoids using GGPLOT
+ggplot(NULL, aes(x = section, y = mean_score, group = 1)) + geom_point(data = group1_mean, color = 'blue') + geom_line(data = group1_mean, color='blue') + geom_point(data = group2_mean, color = 'red') + geom_line(data = group2_mean, color='red') + scale_x_discrete(limits = rev)
+```
+
+We can see that both groups had similar starting points in terms of median scores. Group 2 showed a slightly higher improvement from section petite to moyenne, while group 1 showed a much more significant improvement from the section moyenne to grande. In pure terms of scores, there is little support for the adoption of the alternative pedagogy over the classical pedagogy.
+
+We can take a look at the exact numbers by calculating the difference between the start and end points for each group:
+```{r}
+group1_improvements <- (group1[group1$section =="grande",])$score - (group1[group1$section =="petite",])$score
+group2_improvements <- (group2[group2$section =="grande",])$score - (group2[group2$section =="petite",])$score
+```
+
+And then displaying it:
+```{r}
+summary(group1_improvements)
+summary(group2_improvements)
+```
+Again, in terms of score, there was a more significant improvement shown in group 1.
+
+```{r}
+hist(group1_improvements)
+```
+
+
+## Reflections
+In terms of test performances, there is no supporting evidence for the new method. It must be noted that this analysis does not suffice to discredit the alternative approach either; the dataset is but a small sample over 3 sections, and the differences between both groups are not critical. Furthermore, it is not stated whether the capabilities aimed to be improved by the alternative approach are included in the tests, so few conclusions can be taken from this kind of analysis.
+
+
