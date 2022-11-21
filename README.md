@@ -33,4 +33,10 @@
 
 [ - ] If you have time, git a try to git-annex but no worry if you can’t. What’s important is that you know it exists, what it allows to do, and that it is not so difficult to use.
 
-[ ] Engage in module 3 of the MOOC and chood a topic for the peer evaluation (final task of module 3).
+[ x ] Engage in module 3 of the MOOC
+
+[ ] Choose a topic for the peer evaluation (final task of module 3).
+
+## Homework (5)
+
+[ x ] Continue the hands-on, improve the experiment design and the analysis

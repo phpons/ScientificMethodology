@@ -17,7 +17,7 @@ The data for this computational document was acquired via the tedious process co
 ## Data loading
 Skipping the header row
 ```{r}	
-data_file = "mistakesByFootSize.csv"	
+data_file = "mistakes_by_foot_size.csv"	
 data = read.csv(data_file)
 ```
 

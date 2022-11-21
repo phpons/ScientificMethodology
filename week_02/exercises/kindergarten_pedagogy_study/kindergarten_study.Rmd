@@ -38,11 +38,11 @@ This is interesting, taking all sections into account:
 - Group 2 has a higher median score
 
 ```{r}
-group1_mean <- aggregate(group1$score , list(group1$section), median)
-colnames(group1_median) <- c("section", "mean_score")
+group1_mean <- aggregate(group1$score , list(group1$section), mean)
+colnames(group1_mean) <- c("section", "mean_score")
 
-group2_mean <- aggregate(group2$score , list(group2$section), median)
-colnames(group2_median) <- c("section", "mean_score")
+group2_mean <- aggregate(group2$score , list(group2$section), mean)
+colnames(group2_mean) <- c("section", "mean_score")
 ```
 
 
