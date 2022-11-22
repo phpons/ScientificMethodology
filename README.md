@@ -29,7 +29,7 @@
 
 [ x ] Use good naming and organization conventions in your repos.
 
-[ ] See previous homeworks: use dplyr and ggplot for the first/last name analysis! Complete challenger if you haven’t done so.
+[ x ] See previous homeworks: use dplyr and ggplot for the first/last name analysis! Complete challenger if you haven’t done so.
 
 [ - ] If you have time, git a try to git-annex but no worry if you can’t. What’s important is that you know it exists, what it allows to do, and that it is not so difficult to use.
 
@@ -40,3 +40,7 @@
 ## Homework (5)
 
 [ x ] Continue the hands-on, improve the experiment design and the analysis
+
+## Homework (6)
+
+[ ] Write an in-depth report using a computational document with a decent data management/statistical treatment (i.e., with confidence intervals or regions!).
