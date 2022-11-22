@@ -96,3 +96,30 @@ ggplot(data=top30_over_time, aes(x=year, y=quantity_total, color = name, group=n
 Here we see the same pattern; even fewer first names have taken the top spot for female names. It can be noted, however, that the female names that have dominated over the last 30 years seem to have risen to popularity more recently than their male counterparts.
 
 # 3. Optional : Which department has a larger variety of names along time ? Is there some sort of geographical correlation with the data?
+
+First, let's prepare the data. We want to count the amount of distinct numbers in each department. We also want to have this count over time so we can plot it.
+
+```{r}
+names_by_dpt = first_names %>%                   
+                  group_by(dpt) %>% 
+                  distinct(name, dpt) %>%
+                  summarize(name_count = n()) %>%
+                  arrange(desc(name_count))
+
+names_by_dpt_year = first_names %>%                   
+                  group_by(dpt, year) %>% 
+                  distinct(name, dpt, year) %>%
+                  summarize(name_count=n()) %>%
+                  arrange(year)
+```
+
+Now, let's plot the top 10 departments with the highest variety of names and see how they have changed over time:
+```{r}
+top_10_dpt = head(names_by_dpt, 10)$dpt
+top_10_dpts_by_name_variety = names_by_dpt_year %>%
+                            filter(dpt %in% top_10_dpt)
+ggplot(data=top_10_dpts_by_name_variety, aes(x=year, y=name_count, color = dpt, group = dpt)) +
+  geom_line() +
+  geom_point()
+```
+The department with the most variety over time is "75", that is, Paris. One possible explanation might be the denser population in the region and the concentration of immigrants from different parts of the world, which would naturally increase the name variety.
