@@ -11,73 +11,88 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-# The problem context
-The aim of the activity is to develop a methodology to answer a specific question on a given dataset. 
-
-The dataset is the set of Firstname given in France on a large period of time. 
-[https://www.insee.fr/fr/statistiques/2540004](https://www.insee.fr/fr/statistiques/fichier/2540004/dpt2021_csv.zip), we choose this dataset because it is sufficiently large, you can't do the analysis by hand, the structure is simple
-
-
-You need to use the _tidyverse_ for this analysis. Unzip the file _dpt2020_txt.zip_ (to get the **dpt2020.csv**). Read in R with this code. Note that you might need to install the `readr` package with the appropriate command.
-
-## Download Raw Data from the website
-```{r}
-file = "dpt2021_csv.zip"
-if(!file.exists(file)){
-  download.file("https://www.insee.fr/fr/statistiques/fichier/2540004/dpt2021_csv.zip",
-	destfile=file)
-}
-unzip(file)
-```
-Check if your file is the same as in the first analysis (reproducibility)
-
-expected :
-MD5 (dpt2021.csv) = f18a7d627883a0b248a0d59374f3bab7
 
 ## Build the Dataframe from file
 
 ```{r}
 library(tidyverse)
-firstNames <- read_delim("dpt2021.csv",delim=";", show_col_types = FALSE)
+first_names <- read_delim("dpt2021.csv",delim=";", show_col_types = FALSE)
 ```
 
-To make this analysis easier, I'll remove useless values such as "_PRENOMS_RARES" from the dataset. In addition, The annais field will be converted to a proper date format, which should make visualization clearer with GGPLOT.
+To make this analysis easier, I'll remove useless values such as "_PRENOMS_RARES" from the dataset. In addition, The year field will be converted to a proper date format, which should make visualization clearer with GGPLOT.
 
 ## Drop useless values and fix formatting in the dataframe
 ```{r}
-firstNames = subset(firstNames, preusuel != '_PRENOMS_RARES' & annais != 'XXXX')
+first_names = subset(first_names, preusuel != '_PRENOMS_RARES' & annais != 'XXXX')
+first_names <- first_names %>% rename(name = preusuel, year = annais, quantity = nombre)
+first_names$year <- as.POSIXct(first_names$year, format="%Y")
 ```
-
-```{r}
-firstNames$annais <- as.POSIXct(firstNames$annais, format="%Y")
-```
-
-All of these following questions may need a preliminary analysis of the data, feel free to present answers and justifications in your own order and structure your report as it should be for a scientific report.
-
-1. Choose a firstname and analyse its frequency along time. Compare several firstnames frequency
-2. Establish by gender the most given firstname by year. Analyse the evolution of the most frequent firstname.
-3. Optional : Which department has a larger variety of names along time ? Is there some sort of geographical correlation with the data?
 
 # Analysis
 
-## 1. Frequency of the name Mario over time
-```{r}
-marioFrequency = firstNames %>%
-                  filter(preusuel == "MARIO") %>%
-                  group_by(preusuel, annais) %>%
-                  summarise_at(vars(nombre), list(nombre = sum))
-marioFrequency
-```
+## 1. Choose a firstname and analyse its frequency along time
+I'm considering this just a warm-up for the next sections. Let's analyse the popularity of the name Mario over time:
 
 ```{r}
-ggplot(data=marioFrequency, aes(x=annais, y=nombre, group=1)) +
+mario_popularity = first_names %>%
+                  filter(name == "MARIO") %>%
+                  group_by(name, year) %>%
+                  summarise_at(vars(quantity), list(quantity = sum))
+
+ggplot(data=mario_popularity, aes(x=year, y=quantity, group=1)) +
+  geom_line() +
+  geom_point()
+```
+Even at its most popular, the first name Mario didn't really have an impressive frequency. In section 2, we will see that the most popular names have much higher frequencies.
+
+## 2. Most popular first names by gender
+## Male
+```{r}
+popular_male_names = first_names %>%
+                  filter(sexe == 1) %>% 
+                  group_by(year, name) %>% 
+                  summarise(popularity = sum(quantity)) %>% 
+                  filter(popularity == max(popularity))
+```
+
+Now let's see the progression of those names over time, starting from 1960. What we want to analyze here is whether those recent popular names had already been popular sometime in the past and also whether their popularity is short-lived or not.
+```{r}
+most_popular_last_30y = tail(popular_male_names$name, 30)
+
+top30_over_time = first_names %>%
+                  filter(name %in% most_popular_last_30y & year > as.POSIXct("1960-01-01")) %>% 
+                  group_by(year, name) %>% 
+                  summarise(quantity_total = sum(quantity))
+
+ggplot(data=top30_over_time, aes(x=year, y=quantity_total, color = name, group=name)) +
   geom_line() +
   geom_point()
 ```
 
-## 2. Most frequent firstname by gender
+It seems to be consistent that the most popular names tend to come in waves. Not only that, we cab also note that, over the last 30 years, only 8 male names have taken the top spot. Let's verify if the same phenomenon occurs for female names:
+
+## Female
 ```{r}
-maleNames = firstNames %>%
-                  filter(sexe == 1)
-maleNames
+popular_female_names = first_names %>%
+                  filter(sexe == 2) %>% 
+                  group_by(year, name) %>% 
+                  summarise(popularity = sum(quantity)) %>% 
+                  filter(popularity == max(popularity))
 ```
+
+```{r}
+most_popular_last_30y = tail(popular_female_names$name, 30)
+
+top30_over_time = first_names %>%
+                  filter(name %in% most_popular_last_30y & year > as.POSIXct("1960-01-01")) %>% 
+                  group_by(year, name) %>% 
+                  summarise(quantity_total = sum(quantity))
+
+ggplot(data=top30_over_time, aes(x=year, y=quantity_total, color = name, group=name)) +
+  geom_line() +
+  geom_point()
+```
+
+Here we see the same pattern; even fewer first names have taken the top spot for female names. It can be noted, however, that the female names that have dominated over the last 30 years seem to have risen to popularity more recently than their male counterparts.
+
+# 3. Optional : Which department has a larger variety of names along time ? Is there some sort of geographical correlation with the data?
