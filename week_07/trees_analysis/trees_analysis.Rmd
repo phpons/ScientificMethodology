@@ -1,0 +1,84 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r}
+library(ggplot2)
+```
+# Loading data
+```{r}
+myData=read.table(file="arbres-tot.csv",sep=";",skip=3,header=TRUE)
+myData=myData[myData$X10!=0,]
+```
+# 1. Simple regression
+```{r}
+circ = myData$X70
+height = myData$X10
+simple_reg <- lm(height~circ,data=myData)
+```
+
+Plot the data to get an initial view of the possible correlation.
+
+```{r}
+ggplot(myData,aes(x=circ,y=height))+ geom_point()+
+xlab("circ")+
+ylab("height")
+```
+
+```{r}
+anova(simple_reg)
+summary(simple_reg)
+```
+Plot the regression line
+```{r}
+ggplot(myData,aes(x=circ,y=height))+ geom_point()+
+stat_smooth(method="lm",se=FALSE)+ xlab("circ")+
+ylab("height")
+```
+
+
+```{r}
+plot(simple_reg$residuals)
+plot(simple_reg,3)
+plot(simple_reg,1)
+plot(simple_reg,4)
+```
+
+```{r}
+predict(simple_reg, data.frame(circ=10),interval="prediction")
+```
+
+# 2. Multivariate regression
+Add a column to the sample. Name it circ_sqrt and fill it with the square root of the circumference of each
+tree
+```{r}
+myData$circ_sqrt <- sqrt(myData$X70)
+```
+
+Perform the multivariate linear regression of height on the basis of:
+• of circumference ;
+• of circ_sqrt.
+
+
+
+```{r}
+multi_reg <- lm(height~circ+circ_sqrt,data=myData)
+summary(multi_reg)
+```
+The variable **circ** is not significant at the 5% test level, so we will remove it for the regression.
+
+
+```{r}
+multi_reg_2 <- lm(height~circ_sqrt,data=myData)
+summary(multi_reg_2)
+```
+
+Plot the regression
+
+```{r}
+circ_pred <- seq(0,175,len=1000)
+height_pred <- multi_reg_2$coefficients[1]+multi_reg_2$coefficients[2]*sqrt(circ_pred)
+fct_reg <- data.frame(circ_pred=circ_pred,height_pred=height_pred)
+ggplot() + geom_point(data=myData,aes(x=circ,y=height)) + geom_line(data=fct_reg,aes(x=circ_pred,y=height_pred),col="blue") + stat_smooth(method="lm",se=FALSE) + xlab("circ") + ylab("height")
+```
