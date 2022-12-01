@@ -3,82 +3,137 @@ output:
   pdf_document: default
   html_document: default
 ---
+# Library loading
 ```{r}
-library(ggplot2)
-```
-# Loading data
-```{r}
-myData=read.table(file="arbres-tot.csv",sep=";",skip=3,header=TRUE)
-myData=myData[myData$X10!=0,]
-```
-# 1. Simple regression
-```{r}
-circ = myData$X70
-height = myData$X10
-simple_reg <- lm(height~circ,data=myData)
-```
-
-Plot the data to get an initial view of the possible correlation.
-
-```{r}
-ggplot(myData,aes(x=circ,y=height))+ geom_point()+
-xlab("circ")+
-ylab("height")
-```
-
-```{r}
-anova(simple_reg)
-summary(simple_reg)
-```
-Plot the regression line
-```{r}
-ggplot(myData,aes(x=circ,y=height))+ geom_point()+
-stat_smooth(method="lm",se=FALSE)+ xlab("circ")+
-ylab("height")
+library(tidyverse)
+library(forecast)
+library(tseries)
 ```
 
 
+# Loading data from the Mauna Loa observatory
 ```{r}
-plot(simple_reg$residuals)
-plot(simple_reg,3)
-plot(simple_reg,1)
-plot(simple_reg,4)
+co2_monthly_full <- read.delim(file = 'co2_mm_mlo.txt', comment.char = '#', header = F, sep = '')
+co2_monthly_full <- co2_monthly_full[, c(1, 2, 4)]
+names(co2_monthly_full) <- c('year', 'month', 'co2_concentration')
+head(co2_monthly_full)
+```
+
+# Data cleanup and transformations
+Let's first check if the dataset contains null values
+```{r}
+which(is.na(co2_monthly_full))
+```
+Perfect, we don't have any null data. This is explained in the comments of the dataset: 
+> Missing months have been interpolated
+
+It must be noted, however, that readings in 1958 (first year included in the dataset) and 2022 (ongoing year) are incomplete. These readings will be removed so as not to affect the analysis.
+```{r}
+co2_monthly_full <- co2_monthly_full %>% filter(year != 2022 & year != 1958)
+```
+
+Now we can convert the "year" and "month" fields to date type, which should improve the readability of our plots in the future.The "day" field will be set to the start of the month by default.
+```{r}
+co2_monthly_full$date <- as.Date(paste(co2_monthly_full$year, co2_monthly_full$month, 1, sep = '-'), format = '%Y-%m-%d')
+co2_monthly <- co2_monthly_full[, c('date', 'co2_concentration')]
+head(co2_monthly)
+```
+
+
+
+
+Finally, we'll transform the dataframe into a time series object, which makes it easier to do various plots with the loaded packages.
+```{r}
+co2_ts <- ts(co2_monthly$co2_concentration, start = c(1959, 1), frequency = 12)
+```
+
+# 1. Exploratory analysis
+Let's plot the data for the first time:
+```{r}
+plot(
+  co2_monthly$date,
+  co2_monthly$co2_concentration,
+  type = 'l',
+  xlab = 'Date',
+  ylab = 'CO2 Concentration PPM',
+  main = 'Mauna Loa Weekly Carbon Dioxide Concentration'
+)
+```
+
+From a purely visual analysis, it seems like the data presents both seasonality in its cycle and an upward trend. Let's first take a look at the seasonality:
+
+## Examining seasonality
+```{r}
+boxplot(co2_ts~cycle(co2_ts),xlab="Date", ylab = "CO2 concentration (PPM)",main ="Monthly CO2 average from 1959 to 2021")
+```
+Here we can see that the monthly concentrations show seasonality, with a high point around the months 4-5 and a low point around the months 9-10.
+
+Let's take a look at the seasonality over the years:
+```{r}
+ggplot(data = co2_monthly_full, aes(factor(month), co2_concentration, colour = year, group = year)) +
+  geom_line() +
+  xlab('Month') +
+  ylab('CO2 Concentration PPM') + 
+  ggtitle('Mauna Loa Monthly Carbon Dioxide Concentration') +
+  scale_color_gradientn('Year', colors = rainbow(length(unique(co2_monthly_full$month))))
+```
+The results seem to be consistent over the years, with the seasonality being maintained through the upward trend in CO2 concentrations.
+
+From these plots we could gather that:
+- The CO2 concentration shows a clear upward linear trend over the years
+- The monthly concentrations show seasonality, with a peak around the months 4-5 and a valley around the months 9-10.
+
+## Series decomposition
+Let's take a better look at the time series decomposition:
+```{r}
+decomposeCO2 <- decompose(co2_ts,"additive")
+autoplot(decomposeCO2)
+```
+
+Removing the trend seen above can be useful for further analysis. Let's check if differencing would be enough to make the time series stationary with adf.test():
+```{r}
+adf.test(diff(log(co2_ts)), alternative="stationary", k=0)
+```
+This low P value confirms the alternative hypothesis (that is, the time series has become stationary after one stage of differencing); now let's go ahead and plot ACF:
+```{r}
+diff(log(co2_ts)) %>% ggtsdisplay()
+```
+
+# Making predictions
+## First attempt: 
+Let's first take a look at the P value for the trend, using the date as the independent variable.
+```{r}
+simple_reg_co2 <- lm(co2_concentration ~ date, data = co2_monthly)
 ```
 
 ```{r}
-predict(simple_reg, data.frame(circ=10),interval="prediction")
+ggplot(data = co2_monthly, aes(x = date, y = co2_concentration)) +
+  geom_line() +
+  xlab('Date') +
+  ylab('CO2 Concentration PPM') + 
+  ggtitle('Mauna Loa Weekly Carbon Dioxide Concentration') +
+  stat_smooth(method = "lm", se = FALSE)
 ```
-
-# 2. Multivariate regression
-Add a column to the sample. Name it circ_sqrt and fill it with the square root of the circumference of each
-tree
-```{r}
-myData$circ_sqrt <- sqrt(myData$X70)
-```
-
-Perform the multivariate linear regression of height on the basis of:
-• of circumference ;
-• of circ_sqrt.
-
-
+Visually, we can see that this model might not be perfect as it cannot follow the seasonality. I suspect the errors will have a high autocorrelation because of that:
 
 ```{r}
-multi_reg <- lm(height~circ+circ_sqrt,data=myData)
-summary(multi_reg)
+checkresiduals(simple_reg_co2)
 ```
-The variable **circ** is not significant at the 5% test level, so we will remove it for the regression.
+As expected, the autocorrelation of errors is pretty high, which is not what we want from a forecasting model. Let's try another one.
 
-
+## Second attempt: ARIMA
 ```{r}
-multi_reg_2 <- lm(height~circ_sqrt,data=myData)
-summary(multi_reg_2)
+arima_co2 <- auto.arima(co2_ts)
 ```
-
-Plot the regression
-
 ```{r}
-circ_pred <- seq(0,175,len=1000)
-height_pred <- multi_reg_2$coefficients[1]+multi_reg_2$coefficients[2]*sqrt(circ_pred)
-fct_reg <- data.frame(circ_pred=circ_pred,height_pred=height_pred)
-ggplot() + geom_point(data=myData,aes(x=circ,y=height)) + geom_line(data=fct_reg,aes(x=circ_pred,y=height_pred),col="blue") + stat_smooth(method="lm",se=FALSE) + xlab("circ") + ylab("height")
+checkresiduals(arima_co2)
 ```
+Much better. ARIMA was able to deal with the correlation much more; now we can see that the errors follow a noise pattern, which is preferable for a model.
+
+### Sample forecast:
+Now we can use the forecast function to plot a forecast on the horizon of 100 months, with a confidence interval of 95%.
+```{r}
+arima_forecast_co2 <- forecast(arima_co2, level = c(95), h = 100)
+autoplot(arima_forecast_co2)
+```
+
