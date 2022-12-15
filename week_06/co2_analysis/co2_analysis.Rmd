@@ -24,15 +24,14 @@ Let's first check if the dataset contains null values
 ```{r}
 which(is.na(co2_monthly_full))
 ```
-Perfect, we don't have any null data. This is explained in the comments of the dataset: 
-> Missing months have been interpolated
+Perfect, we don't have any null data. This is because the months in the downloaded dataset had already been interpolated.
 
-It must be noted, however, that readings in 1958 (first year included in the dataset) and 2022 (ongoing year) are incomplete. These readings will be removed so as not to affect the analysis.
+Readings for years 1958 and 2022 will be removed since they do not have the 12 months included.
 ```{r}
 co2_monthly_full <- co2_monthly_full %>% filter(year != 2022 & year != 1958)
 ```
 
-Now we can convert the "year" and "month" fields to date type, which should improve the readability of our plots in the future.The "day" field will be set to the start of the month by default.
+We will also create a single date field based on month and year, which should improve the readability of our plots in the future.
 ```{r}
 co2_monthly_full$date <- as.Date(paste(co2_monthly_full$year, co2_monthly_full$month, 1, sep = '-'), format = '%Y-%m-%d')
 co2_monthly <- co2_monthly_full[, c('date', 'co2_concentration')]
@@ -42,7 +41,7 @@ head(co2_monthly)
 
 
 
-Finally, we'll transform the dataframe into a time series object, which makes it easier to do various plots with the loaded packages.
+Finally, we'll transform the dataframe into a time series object, which enables us to use some helpful R functions further in the analysis.
 ```{r}
 co2_ts <- ts(co2_monthly$co2_concentration, start = c(1959, 1), frequency = 12)
 ```
@@ -60,7 +59,7 @@ plot(
 )
 ```
 
-From a purely visual analysis, it seems like the data presents both seasonality in its cycle and an upward trend. Let's first take a look at the seasonality:
+From a purely visual analysis, it seems like the data presents both seasonality and an upward trend. Let's first take a look at the seasonality:
 
 ## Examining seasonality
 ```{r}
@@ -128,7 +127,7 @@ arima_co2 <- auto.arima(co2_ts)
 ```{r}
 checkresiduals(arima_co2)
 ```
-Much better. ARIMA was able to deal with the correlation much more; now we can see that the errors follow a noise pattern, which is preferable for a model.
+Much better. auto.arima() is able to detect seasonality and adapt to it through statistical tests; now we can see that the errors follow a noise (random) pattern, which is preferable for a model.
 
 ### Sample forecast:
 Now we can use the forecast function to plot a forecast on the horizon of 100 months, with a confidence interval of 95%.
