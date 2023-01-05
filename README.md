@@ -45,6 +45,6 @@
 
 [ x ] Write an in-depth report using a computational document with a decent data management/statistical treatment (i.e., with confidence intervals or regions!).
 
-Quicksort: done with @heconte
+Quicksort: done with @henriqueconte
 
 Peer evaluation subject: **CO2 analysis** (mostly done, but it will receive some improvements)
