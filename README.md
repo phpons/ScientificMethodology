@@ -35,7 +35,7 @@
 
 [ x ] Engage in module 3 of the MOOC
 
-[ ] Choose a topic for the peer evaluation (final task of module 3).
+[ x ] Choose a topic for the peer evaluation (final task of module 3).
 
 ## Homework (5)
 
@@ -43,4 +43,8 @@
 
 ## Homework (6)
 
-[ ] Write an in-depth report using a computational document with a decent data management/statistical treatment (i.e., with confidence intervals or regions!).
+[ x ] Write an in-depth report using a computational document with a decent data management/statistical treatment (i.e., with confidence intervals or regions!).
+
+Quicksort: done with @heconte
+
+Peer evaluation subject: **CO2 analysis** (mostly done, but it will receive some improvements)
