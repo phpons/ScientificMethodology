@@ -49,14 +49,16 @@ Quicksort: done with @henriqueconte
 
 Peer evaluation subject: **CO2 analysis** (mostly done, but it will receive some improvements)
 
-## Homework (7, 8, 9)
+## Homeworks (7, 8, 9)
 No homework.
 
 ## Homework (10)
-[ ] Write an in-depth report using a computational document with a decent data management/statistical treatment (i.e., with confidence intervals or regions!).
+[ X ] Start playing with this [DoE Shiny Application](https://adaphetnodes.shinyapps.io/design_of_experiments/?user_o255).
 
 ## Homework (11)
 No homework.
 
 ## Homework (12)
 [ x ] Prepare a short (1-page) summary with the context (addressed problem and solution 50%) and your opinion about the pros and cons of the proposed technology (50%). Prepare also 2 slides to possibly present the problem to the class. [Link here](https://github.com/phpons/ScientificMethodology/blob/master/Ethics%20of%20Pattern%20Recognition.pdf).
+
+[ x ] Analysis on the DoE application

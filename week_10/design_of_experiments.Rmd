@@ -1,0 +1,92 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggcorrplot)
+library(forecast)
+```
+
+
+# Proposed design of the experiment
+The aim of this experiment is to analyze an unknown model that takes 11 variables with values in the interval [-1, 1] as an input and produces a numerical output. By interacting with the system, I obtained 39 samples which can be seen in the file 'results_DOE.csv' or in my ["playground"](https://adaphetnodes.shinyapps.io/design_of_experiments/?user_o255).
+
+I'll utilize multiple linear regression and ANOVA to identify the variables that best explain this model, as well as creating a model of my own.
+
+# Loading data
+
+```{r}
+df <- read.csv("results_DOE.csv")
+```
+
+# Data visualization
+Let's take a first look at the data and check that it has been loaded in correctly.
+```{r}
+df
+```
+
+The "Date" variable is not relevant for our analysis, so let's remove it and see the summary of the data.
+```{r}
+df <- subset(df, select = -Date)
+summary(df)
+```
+Seems like the data was loaded correctly.
+
+Before building a linear model, let's create a correlation matrix to verify two things:
+1. How each independent variable relates to the output (y)
+2. If variables have a high correlation to each other
+  2.1. If this is the case, we might choose to remove some of the co-correlated variables from the model.
+
+```{r}
+correlation_matrix = round(cor(df), 2)
+
+ggcorrplot(correlation_matrix, hc.order = TRUE, type = "lower",
+          lab = TRUE)
+```
+First, looking at the Y row, we can notice that X9 has a very strong negative correlation with the output. Furthermore, X11 has no impact at all; we can assume that X9 will likely be included in the model, while X11 is virtually useless.
+
+# Building models
+## Multiple linear regression
+
+Let us first build a model from the data including all variables.
+
+```{r}
+multi_reg <- lm(y ~ x1+x2+x3+x4+x5+x6+x7+x8+x9+x10+x11, df)
+summary(multi_reg)
+```
+With a sample of N > 30, we will not check for the normality of residuals of this model.
+The R-Squared value of this model is over 0.99, which is a positive indicator but not sufficient to determine this model is good.
+
+The results of this model indicate that the variables X1, X4 and X9 are likely to have a high impact on the output; x6 and x7 possibly as well.
+
+
+
+```{r}
+multi_reg2 <- lm(y ~ x1+x4+x6+x7+x9, df)
+summary(multi_reg2)
+```
+We can see that the adjusted R-Squared value of the second model is slightly higher than the first model's. 
+
+Let's use ANOVA to verify whether the added complexity of the first model is significant. From the documentation of the function:
+```
+The anova() function will take the model objects as arguments, and return an ANOVA testing whether the more complex model is significantly better at capturing the data than the simpler model. If the resulting p-value is sufficiently low (usually less than 0.05), we conclude that the more complex model is significantly better than the simpler model, and thus favor the more complex model. If the p-value is not sufficiently low (usually greater than 0.05), we should favor the simpler model.
+```
+
+```{r}
+anova(multi_reg, multi_reg2)
+```
+
+Here, ANOVA has tested whether the variables X2, X3, X5, X7, X10 and X11 were relevant. As the p-value is high, we can conclude that that is not the case, so we can stick with the simpler model.
+
+## Conclusion
+This was a very simplistic approach for tackling the challenge. I was not so familiar with ANOVA, therefore I applied one of its "safe" use cases in this analysis.
+
+A larger sample could have aided this analysis produce more complete results; however, we were able to at least conclude that the unknown system we analyzed can be "fit" without the need of all its inputs.
