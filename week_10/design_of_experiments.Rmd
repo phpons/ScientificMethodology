@@ -76,9 +76,11 @@ summary(multi_reg2)
 We can see that the adjusted R-Squared value of the second model is slightly higher than the first model's. 
 
 Let's use ANOVA to verify whether the added complexity of the first model is significant. From the documentation of the function:
-```
-The anova() function will take the model objects as arguments, and return an ANOVA testing whether the more complex model is significantly better at capturing the data than the simpler model. If the resulting p-value is sufficiently low (usually less than 0.05), we conclude that the more complex model is significantly better than the simpler model, and thus favor the more complex model. If the p-value is not sufficiently low (usually greater than 0.05), we should favor the simpler model.
-```
+
+> The anova() function will take the model objects as arguments, and return an ANOVA testing whether the more complex model is significantly better at capturing the data 
+> than the simpler model. If the resulting p-value is sufficiently low (usually less than 0.05), we conclude that the more complex model is significantly better than the 
+> simpler model, and thus favor the more complex model. If the p-value is not sufficiently low (usually greater than 0.05), we should favor the simpler model.
+
 
 ```{r}
 anova(multi_reg, multi_reg2)
