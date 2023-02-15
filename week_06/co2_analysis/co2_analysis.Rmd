@@ -4,7 +4,8 @@ output:
   html_document: default
 ---
 # Library loading
-```{r}
+```{r libraries, results="hide", message=FALSE}
+options(warn=-1)
 library(tidyverse)
 library(forecast)
 library(tseries)
@@ -12,6 +13,10 @@ library(tseries)
 
 
 # Loading data from the Mauna Loa observatory
+Let's first load the data. From the comments included in this dataset, the original columns are:
+> Year, month, decimal date, monthly CO2 average, deseasonalized monthly CO2 average, number of days in month, std. dev of days, unc. of monthly mean
+
+For this analysis, we are only interested in the year, month and CO2 concentration.
 ```{r}
 co2_monthly_full <- read.delim(file = 'co2_mm_mlo.txt', comment.char = '#', header = F, sep = '')
 co2_monthly_full <- co2_monthly_full[, c(1, 2, 4)]
@@ -25,6 +30,7 @@ Let's first check if the dataset contains null values
 which(is.na(co2_monthly_full))
 ```
 Perfect, we don't have any null data. This is because the months in the downloaded dataset had already been interpolated.
+
 
 Readings for years 1958 and 2022 will be removed since they do not have the 12 months included.
 ```{r}
@@ -44,9 +50,11 @@ head(co2_monthly)
 Finally, we'll transform the dataframe into a time series object, which enables us to use some helpful R functions further in the analysis.
 ```{r}
 co2_ts <- ts(co2_monthly$co2_concentration, start = c(1959, 1), frequency = 12)
+co2_ts
 ```
 
 # 1. Exploratory analysis
+
 Let's plot the data for the first time:
 ```{r}
 plot(
@@ -82,7 +90,7 @@ From these plots we could gather that:
 - The CO2 concentration shows a clear upward linear trend over the years
 - The monthly concentrations show seasonality, with a peak around the months 4-5 and a valley around the months 9-10.
 
-## Series decomposition
+## Time Series decomposition
 Let's take a better look at the time series decomposition:
 ```{r}
 decomposeCO2 <- decompose(co2_ts,"additive")
@@ -91,12 +99,12 @@ autoplot(decomposeCO2)
 
 Removing the trend seen above can be useful for further analysis. Let's check if differencing would be enough to make the time series stationary with adf.test():
 ```{r}
-adf.test(diff(log(co2_ts)), alternative="stationary", k=0)
+adf.test(diff(co2_ts), alternative="stationary", k=0)
 ```
-This low P value confirms the alternative hypothesis (that is, the time series has become stationary after one stage of differencing); now let's go ahead and plot ACF:
-```{r}
-diff(log(co2_ts)) %>% ggtsdisplay()
-```
+This low P value confirms the alternative hypothesis (that is, the time series has become stationary after one stage of differencing). 
+
+**When choosing an approach to deal with this data, this has to be taken into account**. I'll first present a naive approach not dealing with the non-stationarity of the data, and then I'll compare its results to an approach that applies differencing.
+
 
 # Making predictions
 ## First attempt: 
@@ -113,21 +121,27 @@ ggplot(data = co2_monthly, aes(x = date, y = co2_concentration)) +
   ggtitle('Mauna Loa Weekly Carbon Dioxide Concentration') +
   stat_smooth(method = "lm", se = FALSE)
 ```
-Visually, we can see that this model might not be perfect as it cannot follow the seasonality. I suspect the errors will have a high autocorrelation because of that:
+Visually, we can see that this model is far from perfect as it cannot follow the seasonality. I suspect the errors will have a high autocorrelation because of that:
 
 ```{r}
 checkresiduals(simple_reg_co2)
 ```
-As expected, the autocorrelation of errors is pretty high, which is not what we want from a forecasting model. Let's try another one.
+As expected, the autocorrelation of errors is pretty high, which is not what we want from a forecasting model.We can also visually notice that the residuals are skewed by looking at their distribution.
 
 ## Second attempt: ARIMA
+While ARIMA cannot be used with non-stationary data, auto.arima() will perform the following steps before using ARIMA:
+> 1. Check for stationarity with ADF
+> 2. If non-stationary, apply differencing with enough steps to pass ADF
+> 3. Apply ARIMA
+
 ```{r}
 arima_co2 <- auto.arima(co2_ts)
 ```
+
 ```{r}
 checkresiduals(arima_co2)
 ```
-Much better. auto.arima() is able to detect seasonality and adapt to it through statistical tests; now we can see that the errors follow a noise (random) pattern, which is preferable for a model.
+Much better. auto.arima() is able to detect non-stationarity and adapt to it through statistical tests; now we can see that the errors follow a noise (random) pattern, which is preferable for a model.
 
 ### Sample forecast:
 Now we can use the forecast function to plot a forecast on the horizon of 100 months, with a confidence interval of 95%.
