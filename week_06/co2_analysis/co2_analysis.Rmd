@@ -129,7 +129,7 @@ checkresiduals(simple_reg_co2)
 As expected, the autocorrelation of errors is pretty high, which is not what we want from a forecasting model.We can also visually notice that the residuals are skewed by looking at their distribution.
 
 ## Second attempt: ARIMA
-While ARIMA cannot be used with non-stationary data, auto.arima() will perform the following steps before using ARIMA:
+While ARMA cannot be used with non-stationary data, auto.arima() will perform the following steps before using ARIMA:
 > 1. Check for stationarity with ADF
 > 2. If non-stationary, apply differencing with enough steps to pass ADF
 > 3. Apply ARIMA
